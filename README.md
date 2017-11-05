@@ -11,4 +11,8 @@ Currently I have the code of :
 6- Genetic Algorithm (Matlab) ...Soon
 7- Simulated Annealing (Java) ...Soon
 8- Late Acceptance Hill Climbing (Java) ...Soon
+9- Pattern Discovery using LSTM in Keras
+10- Pattern Discovery using DBN in noLearn
+11-
+
 
