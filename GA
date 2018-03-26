@@ -1,0 +1,159 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Sep 10 21:16:22 2017
+
+@author: Abdulrahman
+"""
+
+import numpy as np
+import pandas as pd
+
+#==============================================================================
+# Gentic Algorithms steps
+# 1. create population
+# 2  evaluate the population
+# 3 select who is the fittest parents
+# 4 crossover and mutate 
+# 5 continue until termination
+#==============================================================================
+
+genes = 17
+low =90
+high =100
+population = np.random.randint(low, high)
+parents_selection =0.2
+cross_rate = 0.8
+#==============================================================================
+#  1. population in binary
+#==============================================================================
+
+'''population = pd.DataFrame([np.random.rand(100), np.random.rand(100)])'''
+binaries = [[(np.binary_repr(np.random.randint(1,100), width =genes)[j]) for j in range (genes)
+                        for i in range(population) ]]
+ 
+# creating a dataframe of population in binary 
+populationDF = pd.DataFrame( np.array (binaries, dtype =int ).reshape (population,genes))
+
+# Transforming the dataframe of binary to place each population in a column and each gene in a row. 
+# At the end, we place the power of the gene in the last column : Ex: gene 0 will have a power of 2^0 = 1
+IpopulationDF = populationDF.T
+IpopulationDF ['power'] = np.power(2,populationDF.T.index) 
+
+
+#using the power of the genes in the previous data structure, we are able to calculate the corresponded decimal value 
+DpopulationDF = (IpopulationDF['power'] * populationDF).sum(axis =1)                          
+firstDpopulationDF = DpopulationDF
+#==============================================================================
+# the loop is here until termination                        
+#==============================================================================
+
+for i in range (150):
+    #==============================================================================
+    # 2- Evalue the population    
+    # The cost function is at 100000
+    #==============================================================================
+    print("######################### Generation %d " % i)
+    Fitness = ((DpopulationDF - 100000).abs()).sort_values()
+    
+    selected = Fitness[1: int (np.round(population * parents_selection))]
+    #==============================================================================
+    # selection using Roulette Wheel
+    #==============================================================================
+    
+    # passed population data frame stores the individual that will be passed to the next generation or iteration
+    # so , first the selected individual are appended in this data frame
+    passedPopulationDF = pd.DataFrame([]).append( IpopulationDF[selected.index])
+    passedPopulationDF= passedPopulationDF.T
+    passedPopulationDF = passedPopulationDF.set_index (np.arange (selected.size))
+    
+    # as long as the passed population is less than the original population, we keep appending individuals using
+    # crossover and mutation until the size of the passed individual is the same as the size of the initial population
+    # we control the loop when the size of the passedpopulation is less than the population by 2. if crossover happens,
+    # then two children will be appended to passed population. However, mutation was selected , then one children will be added
+    # and thus passedPopulation will be smaller than population by 1 individual. Thus, we will apply mutation again , to complete
+    # the size of the passed population
+    while (passedPopulationDF.index.size <= population - 2):
+        print(passedPopulationDF.index.size)
+        # this for roulette wheel, we take the sum , and we selected two individuals who their fitness are greater than s * random number
+        s= DpopulationDF.sum()
+        n= s* np.random.random() 
+        for i in range(DpopulationDF.index.size):
+            if (DpopulationDF.cumsum()[i]> n):
+                parent_one= (DpopulationDF.index[i])
+                break
+            
+        
+        n= s* np.random.random() 
+        for i in range(DpopulationDF.index.size):
+            if ((DpopulationDF.cumsum()[i]> n) & (DpopulationDF.index[i] != parent_one)):
+                
+                parent_two= (DpopulationDF.index[i])
+                break
+        
+    # here we randomize to determine whether to crossover or mutate based on mutate_probability value    
+        mutate_propability = np.random.random()
+        if mutate_propability > 0.1 :
+            
+    #==============================================================================
+    # 4. crossover
+    #==============================================================================
+    
+    
+    
+    #crossPopulationDF = pd.DataFrame([])
+    
+    #for i in range (0 , populationDF.index.size):
+    #    
+    #    if  ( populationDF.index[i] not in selected.index) == True :
+    #        crossPopulationDF= crossPopulationDF.append (IpopulationDF[i])  
+    #       
+    ##for i in range(int (np.round (crossPopulationDF.index.size * cross_rate)) - 1):
+    #for i in range(0,5,2):
+    #    print (i)
+    #    crossPopulationDF.ix[i,:a]= crossPopulationDF.ix[i+1,a:]  
+    #    crossPopulationDF.ix[i,a:]= crossPopulationDF.ix[i+1,:a]   
+            a =np.random.randint(genes)  
+            children_one = pd.Series (IpopulationDF.ix[:a-1,parent_one]).append (pd.Series (IpopulationDF.ix [a:, parent_two]))   
+            children_two= pd.Series (IpopulationDF.ix[:a-1,parent_two]).append (pd.Series (IpopulationDF.ix [a:, parent_one]))   
+            passedPopulationDF = passedPopulationDF.append(children_one , ignore_index = True)
+            passedPopulationDF = passedPopulationDF.append(children_two , ignore_index = True)
+        
+        else:
+    #==============================================================================
+    # this is the mutation process
+    #==============================================================================
+            mutationPoint =np.random.randint(genes) 
+            children_one = pd.Series (IpopulationDF.ix[:,parent_one]  )
+            print('mutation is applied')        
+            print (children_one[mutationPoint])
+            children_one[mutationPoint]= int ( np.invert (bool ( IpopulationDF.ix [mutationPoint,parent_one])))
+            print (children_one[mutationPoint])
+    #        children_two = pd.Series (IpopulationDF.ix[:,parent_two]  )
+    #        children_two[mutationPoint]= int ( np.invert (bool ( IpopulationDF.ix [mutationPoint,parent_two])))
+            
+            passedPopulationDF = passedPopulationDF.append(children_one , ignore_index = True)
+    #        passedPopulationDF = passedPopulationDF.append(children_two , ignore_index = True)
+       
+           
+        
+        
+    if (np.abs (passedPopulationDF.index.size - population) == 1):
+            mutationPoint =np.random.randint(genes) 
+            children_one = pd.Series (IpopulationDF.ix[:,parent_one]  )
+            print('passed population size is smaller than population size by one, so this step is applied')        
+            print (children_one[mutationPoint])
+            children_one[mutationPoint]= int ( np.invert (bool ( IpopulationDF.ix [mutationPoint,parent_one])))
+            print (children_one[mutationPoint])
+            passedPopulationDF = passedPopulationDF.append(children_one , ignore_index = True)
+    
+    #==============================================================================
+    # so far, we have completed the genetic algorithm for one pass. we obtained
+    #passedPopulationDF as  our initial population in the second run
+    #==============================================================================
+    IpassedPopulationDF = passedPopulationDF.T
+    IpassedPopulationDF ['power'] = np.power(2,passedPopulationDF.T.index) 
+
+
+    #using the power of the genes in the previous data structure, we are able to calculate the corresponded decimal value 
+    DpassedPopulationDF = (IpassedPopulationDF['power'] * passedPopulationDF).sum(axis =1)   
+    DpopulationDF = DpassedPopulationDF
